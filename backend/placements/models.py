@@ -29,6 +29,7 @@ class Job(models.Model):
     deadline = models.DateField()
     description = models.TextField(blank=True, null=True)
     jdUrl = models.URLField(blank=True, null=True)
+    jdPdf = models.FileField(upload_to="job_descriptions/", blank=True, null=True)
     postedBy = models.CharField(max_length=255)
     postedAt = models.DateField()
     location = models.CharField(max_length=255)

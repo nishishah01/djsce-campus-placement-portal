@@ -102,6 +102,16 @@ export default function StudentJobs() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>
+                  {job.jdPdf && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(job.jdPdf, '_blank')}
+                      className="w-full"
+                    >
+                      View Job Description PDF
+                    </Button>
+                  )}
                   <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{job.location}</span>
                     <span className="flex items-center gap-1"><IndianRupee className="h-3.5 w-3.5" />{job.stipend}</span>

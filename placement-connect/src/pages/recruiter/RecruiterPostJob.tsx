@@ -23,9 +23,10 @@ export default function RecruiterPostJob() {
     deadline: "",
     description: "",
     jdUrl: "",
+    jdPdf: null as File | null,
     eligibleDepartments: [] as string[],
   });
-  const [jdType, setJdType] = useState<"text" | "pdf">("text");
+  const [jdType, setJdType] = useState<"text" | "upload">("text");
 
   const toggleDept = (dept: string) => {
     setForm((prev) => ({
@@ -46,17 +47,45 @@ export default function RecruiterPostJob() {
       return;
     }
 
-    const newJob = {
+    const jobData = {
       id: `j${Date.now()}`,
-      ...form,
+      companyName: form.companyName,
+      role: form.role,
+      stipend: form.stipend,
+      location: form.location,
+      type: form.type,
+      deadline: form.deadline,
+      description: form.description,
+      jdUrl: form.jdUrl,
       postedBy: userId,
       postedAt: new Date().toISOString().split("T")[0],
+      eligibleDepartments: form.eligibleDepartments,
     };
 
-    createJob(newJob, {
+    let dataToSend: any = jobData;
+    if (form.jdPdf) {
+      const formData = new FormData();
+      formData.append('id', jobData.id);
+      formData.append('companyName', jobData.companyName);
+      formData.append('role', jobData.role);
+      formData.append('stipend', jobData.stipend);
+      formData.append('location', jobData.location);
+      formData.append('type', jobData.type);
+      formData.append('deadline', jobData.deadline);
+      formData.append('description', jobData.description || '');
+      formData.append('jdUrl', jobData.jdUrl || '');
+      formData.append('postedBy', jobData.postedBy);
+      formData.append('postedAt', jobData.postedAt);
+      formData.append('eligibleDepartments', JSON.stringify(jobData.eligibleDepartments));
+      formData.append('jdPdf', form.jdPdf);
+      dataToSend = formData;
+    }
+
+    createJob(dataToSend, {
       onSuccess: () => {
         toast.success("Job posted successfully!");
-        setForm({ companyName: "", role: "", stipend: "", location: "", type: "Full-Time", deadline: "", description: "", jdUrl: "", eligibleDepartments: [] });
+        setForm({ companyName: "", role: "", stipend: "", location: "", type: "Full-Time", deadline: "", description: "", jdUrl: "", jdPdf: null, eligibleDepartments: [] });
+        setJdType("text");
       },
       onError: () => {
         toast.error("Failed to post job. Please try again.");
@@ -115,15 +144,15 @@ export default function RecruiterPostJob() {
                     <span className="text-sm">Write Text Description</span>
                   </label>
                   <label className="flex cursor-pointer items-center gap-2">
-                    <input type="radio" name="jdType" checked={jdType === "pdf"} onChange={() => setJdType("pdf")} className="cursor-pointer" />
-                    <span className="text-sm">Provide PDF Link</span>
+                    <input type="radio" name="jdType" checked={jdType === "upload"} onChange={() => setJdType("upload")} className="cursor-pointer" />
+                    <span className="text-sm">Upload PDF</span>
                   </label>
                 </div>
 
                 {jdType === "text" ? (
-                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value, jdUrl: "" })} rows={4} placeholder="Enter detailed job description..." required={jdType === "text"} />
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value, jdUrl: "", jdPdf: null })} rows={4} placeholder="Enter detailed job description..." required={jdType === "text"} />
                 ) : (
-                  <Input type="url" value={form.jdUrl} onChange={(e) => setForm({ ...form, jdUrl: e.target.value, description: "" })} placeholder="https://example.com/job-description.pdf" required={jdType === "pdf"} />
+                  <Input type="file" accept=".pdf" onChange={(e) => setForm({ ...form, jdPdf: e.target.files?.[0] || null, description: "", jdUrl: "" })} required={jdType === "upload"} />
                 )}
               </div>
               <div>

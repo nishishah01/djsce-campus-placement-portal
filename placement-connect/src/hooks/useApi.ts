@@ -25,6 +25,7 @@ export interface Job {
   deadline: string;
   description?: string;
   jdUrl?: string;
+  jdPdf?: string;
   postedBy: string;
   postedAt: string;
   location: string;
@@ -77,10 +78,11 @@ export const useCreateJob = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
+      const isFormData = data instanceof FormData;
       const res = await fetch(API_URL + 'jobs/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        headers: isFormData ? undefined : { 'Content-Type': 'application/json' },
+        body: isFormData ? data : JSON.stringify(data),
       });
       if (!res.ok) throw new Error('Failed to create job');
       return res.json();
