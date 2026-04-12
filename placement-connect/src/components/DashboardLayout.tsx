@@ -1,8 +1,8 @@
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, GraduationCap, Briefcase, Shield, Menu, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Briefcase, GraduationCap, LogOut, Menu, Shield, X } from "lucide-react";
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const navItems = {
   student: [
@@ -49,15 +49,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="container flex h-16 items-center justify-between">
+          
+          {/* LOGO + TITLE */}
           <div className="flex items-center gap-3">
             <Link to={`/${role}`} className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold text-foreground">PlaceHub</span>
+              
+              {/* 🔥 LOGO REPLACED HERE */}
+              <div className="flex items-center justify-center">
+  <img
+    src="/favicon.ico"
+    alt="College Logo"
+    className="h-10 w-10 object-contain"
+  />
+</div>
+
+              <span className="text-lg font-bold text-foreground">
+                DJSCE Campus Placement Portal
+              </span>
             </Link>
           </div>
 
+          {/* DESKTOP NAV */}
           <nav className="hidden items-center gap-1 md:flex">
             {items.map((item) => (
               <Link
@@ -74,6 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ))}
           </nav>
 
+          {/* RIGHT SIDE */}
           <div className="flex items-center gap-3">
             <div className="hidden items-center gap-2 md:flex">
               <Icon className="h-4 w-4 text-muted-foreground" />
@@ -82,9 +95,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {roleLabels[role]}
               </span>
             </div>
+
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="h-4 w-4" />
             </Button>
+
             <Button
               variant="ghost"
               size="sm"
@@ -96,6 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
+        {/* MOBILE MENU */}
         {mobileOpen && (
           <div className="border-t border-border bg-card p-4 md:hidden">
             <div className="mb-3 flex items-center gap-2">
@@ -105,6 +121,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {roleLabels[role]}
               </span>
             </div>
+
             {items.map((item) => (
               <Link
                 key={item.path}
