@@ -1,16 +1,18 @@
-import { useJobs, useApplications, useStudents } from "@/hooks/useApi";
-import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { useApplications, useJobs, useStudents, useUpdateApplication } from "@/hooks/useApi";
+import { Download, Users } from "lucide-react";
 
 export default function RecruiterPostings() {
   const { userId } = useAuth();
   const { data: jobs = [] } = useJobs();
   const { data: applications = [] } = useApplications();
   const { data: students = [] } = useStudents();
+  const { mutate: updateApplication } = useUpdateApplication();
   const myJobs = jobs.filter((j) => j.postedBy === userId);
 
   return (
@@ -35,9 +37,24 @@ export default function RecruiterPostings() {
                         <p className="text-sm text-muted-foreground">{job.companyName} · {job.location}</p>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="ml-auto mr-2 flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {apps.length}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Users className="h-3 w-3" /> {apps.length}
+                      </Badge>
+                      {apps.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`http://127.0.0.1:8000/api/jobs/${job.id}/download_applications/`, '_blank');
+                          }}
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          CSV
+                        </Button>
+                      )}
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent>
                     {apps.length === 0 ? (
@@ -47,14 +64,46 @@ export default function RecruiterPostings() {
                         {apps.map((app) => {
                           const student = students.find((s) => s.id === app.studentId);
                           return (
-                            <div key={app.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                            <div key={app.id} className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                               <div>
                                 <p className="font-medium text-foreground">{student?.name}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {student?.department} · CGPA: {student?.cgpa} · SAP: {student?.sapId}
                                 </p>
+                                {app.customResume ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="mt-2 px-2"
+                                    onClick={() => window.open(app.customResume, '_blank')}
+                                  >
+                                    Download Company Resume
+                                  </Button>
+                                ) : (
+                                  <p className="mt-2 text-xs text-muted-foreground">No company-specific resume uploaded.</p>
+                                )}
                               </div>
-                              <Badge variant="outline">{app.status}</Badge>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline">{app.status}</Badge>
+                                {app.status === 'pending' && (
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => updateApplication({ id: app.id, data: { status: 'shortlisted' } })}
+                                    >
+                                      Shortlist
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => updateApplication({ id: app.id, data: { status: 'rejected' } })}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           );
                         })}

@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { GraduationCap, Briefcase, Shield } from "lucide-react";
-import { Role, useStudents, useCreateStudent, useRecruiters, useCreateRecruiter } from "@/hooks/useApi";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { Role, useCreateRecruiter, useCreateStudent, useRecruiters, useStudents } from "@/hooks/useApi";
+import { Briefcase, GraduationCap, Shield } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const roles: { role: Role; label: string; desc: string; icon: typeof GraduationCap; path: string }[] = [
   { role: "student", label: "Student", desc: "Browse jobs, apply & track applications", icon: GraduationCap, path: "/student" },
@@ -59,11 +59,17 @@ export default function LoginPage() {
     }
 
     if (selectedRole === "student") {
+      if (!password.trim()) {
+        toast.error("Please enter your password.");
+        return;
+      }
       const student = students.find((s) => s.sapId === identifier || s.id === identifier || s.email === identifier);
-      if (student) {
+      if (student && student.password === password) {
         login("student", student.id, student.name);
         toast.success(`Welcome back, ${student.name}!`);
         navigate("/student");
+      } else if (student) {
+        toast.error("Invalid password for this student account.");
       } else {
         toast.error("Student profile not found. Try registering instead.");
       }
@@ -122,8 +128,8 @@ export default function LoginPage() {
 
   const submitRegistration = () => {
     if (selectedRole === "student") {
-      if (!regForm.name || !regForm.email || !regForm.sapId || !regForm.cgpa) {
-        toast.error("Please fill all required student fields.");
+      if (!regForm.name || !regForm.email || !regForm.sapId || !regForm.cgpa || !regForm.password) {
+        toast.error("Please fill all required student fields including password.");
         return;
       }
 
@@ -137,7 +143,7 @@ export default function LoginPage() {
         score10th: 80,
         score12th: 80,
         cgpa: parseFloat(regForm.cgpa),
-        resumeUrl: "",
+        password: regForm.password,
       };
 
       createStudent(newStudent, {
@@ -231,6 +237,10 @@ export default function LoginPage() {
                     <Label>CGPA</Label>
                     <Input type="number" step="0.1" value={regForm.cgpa} onChange={(e) => setRegForm({...regForm, cgpa: e.target.value})} placeholder="8.5" />
                   </div>
+                  <div className="sm:col-span-2">
+                    <Label>Password</Label>
+                    <Input type="password" value={regForm.password} onChange={(e) => setRegForm({...regForm, password: e.target.value})} placeholder="Create a password" />
+                  </div>
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -263,7 +273,7 @@ export default function LoginPage() {
           ) : (
             <>
               <DialogDescription>
-                {selectedRole === "student" && "Enter your SAP ID, Email, or Profile ID to log in."}
+                {selectedRole === "student" && "Enter your SAP ID, Email, or Profile ID and Password to log in."}
                 {selectedRole === "recruiter" && "Enter your Email and Password to log in."}
                 {selectedRole === "coordinator" && "Enter your Coordinator SAP ID and Password to log in."}
               </DialogDescription>
@@ -278,7 +288,7 @@ export default function LoginPage() {
                     onKeyDown={(e) => e.key === "Enter" && selectedRole !== "coordinator" && submitLogin()}
                   />
                 </div>
-                {(selectedRole === "coordinator" || selectedRole === "recruiter") && (
+                {(selectedRole === "student" || selectedRole === "coordinator" || selectedRole === "recruiter") && (
                   <div>
                     <Label>Password</Label>
                     <Input

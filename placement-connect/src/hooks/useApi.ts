@@ -147,3 +147,21 @@ export const useUpdateStudent = () => {
     },
   });
 };
+
+export const useUpdateApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Application> }) => {
+      const res = await fetch(API_URL + `applications/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to update application');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+    },
+  });
+};

@@ -17,6 +17,7 @@ class Student(models.Model):
     score10th = models.FloatField()
     score12th = models.FloatField()
     cgpa = models.FloatField()
+    password = models.CharField(max_length=255, default="password123")
     resumeUrl = models.FileField(upload_to="resumes/", blank=True, null=True)
     avatar = models.CharField(max_length=500, blank=True, null=True)
 
