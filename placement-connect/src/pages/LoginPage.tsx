@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -190,7 +190,7 @@ export default function LoginPage() {
       </div>
 
       <div className="mb-10 text-center">
-        <p className="mt-2 text-xl font-medium text-muted-foreground">Campus Placement Portal</p>
+        <p className="mt-2 text-4xl font-medium text-muted-foreground">Campus Placement Portal</p>
       </div>
 
       <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-3">

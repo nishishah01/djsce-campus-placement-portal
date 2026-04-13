@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "placements",
     "rest_framework",
     "corsheaders",
+    "cloudinary_storage",
+    "cloudinary",
 ]
 
 MIDDLEWARE = [
@@ -131,3 +133,24 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Media files setup for file uploads
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Cloudinary settings
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+from decouple import config
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default='your-cloud-name'),
+    'API_KEY': config('CLOUDINARY_API_KEY', default='your-api-key'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default='your-api-secret'),
+}
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+)
+
+# Use Cloudinary for media files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

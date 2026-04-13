@@ -11,7 +11,16 @@ import { useCreateJob } from "@/hooks/useApi";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const departments = ["Computer Science", "Information Technology", "Electronics", "Mechanical", "Civil", "Electrical"];
+const departments = [
+  "Computer Engineering",
+  "Information Technology",
+  "CSE-DS",
+  "AIML",
+  "AIDS",
+  "IOT",
+  "Mechanical",
+  "EXTC",
+];
 
 export default function RecruiterPostJob() {
   const [form, setForm] = useState({

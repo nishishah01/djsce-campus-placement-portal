@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 class Recruiter(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
@@ -18,7 +19,7 @@ class Student(models.Model):
     score12th = models.FloatField()
     cgpa = models.FloatField()
     password = models.CharField(max_length=255, default="password123")
-    resumeUrl = models.FileField(upload_to="resumes/", blank=True, null=True)
+    resumeUrl = CloudinaryField('resume', resource_type='raw', blank=True, null=True)
     avatar = models.CharField(max_length=500, blank=True, null=True)
 
 class Job(models.Model):
@@ -30,7 +31,7 @@ class Job(models.Model):
     deadline = models.DateField()
     description = models.TextField(blank=True, null=True)
     jdUrl = models.URLField(blank=True, null=True)
-    jdPdf = models.FileField(upload_to="job_descriptions/", blank=True, null=True)
+    jdPdf = CloudinaryField('job_description', resource_type='raw', blank=True, null=True)
     postedBy = models.CharField(max_length=255)
     postedAt = models.DateField()
     location = models.CharField(max_length=255)
@@ -53,5 +54,5 @@ class Application(models.Model):
         ("accepted", "accepted"),
     )
     status = models.CharField(max_length=50, choices=STATUS_CHOICES)
-    customResume = models.FileField(upload_to="custom_resumes/", blank=True, null=True)
+    customResume = CloudinaryField('custom_resume', resource_type='raw', blank=True, null=True)
     coverNote = models.TextField(blank=True, null=True)
