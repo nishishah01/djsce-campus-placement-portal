@@ -135,7 +135,7 @@ export const useUpdateStudent = () => {
     mutationFn: async ({ id, data }: { id: string; data: FormData | Partial<Student> }) => {
       const isFormData = data instanceof FormData;
       const res = await fetch(API_URL + `students/${id}/`, {
-        method: 'PUT',
+        method: isFormData ? 'PUT' : 'PATCH',
         headers: isFormData ? {} : { 'Content-Type': 'application/json' },
         body: isFormData ? data : JSON.stringify(data),
       });
@@ -147,6 +147,7 @@ export const useUpdateStudent = () => {
     },
   });
 };
+
 
 export const useUpdateApplication = () => {
   const queryClient = useQueryClient();
