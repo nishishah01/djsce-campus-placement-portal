@@ -5,13 +5,13 @@ class Recruiter(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     companyName = models.CharField(max_length=255)
     recruiterName = models.CharField(max_length=255)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     password = models.CharField(max_length=255, default="password123")
 
 class Student(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
-    sapId = models.CharField(max_length=255)
+    sapId = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField()
     department = models.CharField(max_length=255)
     dob = models.DateField()

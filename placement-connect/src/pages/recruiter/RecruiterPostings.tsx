@@ -79,8 +79,17 @@ export default function RecruiterPostings() {
                                   >
                                     Download Company Resume
                                   </Button>
+                                ) : student?.resumeUrl ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="mt-2 px-2"
+                                    onClick={() => window.open(student.resumeUrl, '_blank')}
+                                  >
+                                    Download Default Resume
+                                  </Button>
                                 ) : (
-                                  <p className="mt-2 text-xs text-muted-foreground">No company-specific resume uploaded.</p>
+                                  <p className="mt-2 text-xs text-muted-foreground">No resume uploaded.</p>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">

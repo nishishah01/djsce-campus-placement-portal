@@ -150,6 +150,7 @@ cloudinary.config(
     cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
     api_key=CLOUDINARY_STORAGE['API_KEY'],
     api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True,  # always generate https:// URLs
 )
 
 # Use Cloudinary for media files

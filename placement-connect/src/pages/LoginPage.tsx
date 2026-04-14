@@ -38,7 +38,6 @@ export default function LoginPage() {
   const [regForm, setRegForm] = useState({
     name: "",
     email: "",
-    sapId: "",
     companyName: "",
     department: "",
     cgpa: "",
@@ -128,7 +127,7 @@ export default function LoginPage() {
 
   const submitRegistration = () => {
     if (selectedRole === "student") {
-      if (!regForm.name || !regForm.email || !regForm.sapId || !regForm.cgpa || !regForm.password) {
+      if (!regForm.name || !regForm.email || !regForm.cgpa || !regForm.password) {
         toast.error("Please fill all required student fields including password.");
         return;
       }
@@ -136,7 +135,7 @@ export default function LoginPage() {
       const newStudent = {
         id: `s_live_${Date.now()}`,
         name: regForm.name,
-        sapId: regForm.sapId,
+        sapId: "",
         email: regForm.email,
         department: regForm.department || "General",
         dob: "2000-01-01",
@@ -177,7 +176,7 @@ export default function LoginPage() {
           navigate("/recruiter");
         },
         onError: () => {
-          toast.error("Failed to create account. Please try again.");
+          toast.error("This email already exists. Please contact the coordinator to create an account.");
         }
       });
     }
@@ -226,10 +225,6 @@ export default function LoginPage() {
                     <Input value={regForm.name} onChange={(e) => setRegForm({...regForm, name: e.target.value})} placeholder="John Doe" />
                   </div>
                   <div>
-                    <Label>SAP ID</Label>
-                    <Input value={regForm.sapId} onChange={(e) => setRegForm({...regForm, sapId: e.target.value})} placeholder="500091..." />
-                  </div>
-                  <div>
                     <Label>Email</Label>
                     <Input type="email" value={regForm.email} onChange={(e) => setRegForm({...regForm, email: e.target.value})} placeholder="john@uni.edu" />
                   </div>
@@ -237,9 +232,12 @@ export default function LoginPage() {
                     <Label>CGPA</Label>
                     <Input type="number" step="0.1" value={regForm.cgpa} onChange={(e) => setRegForm({...regForm, cgpa: e.target.value})} placeholder="8.5" />
                   </div>
-                  <div className="sm:col-span-2">
+                  <div>
                     <Label>Password</Label>
                     <Input type="password" value={regForm.password} onChange={(e) => setRegForm({...regForm, password: e.target.value})} placeholder="Create a password" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-muted-foreground">You can add your SAP ID later from your profile after logging in.</p>
                   </div>
                 </div>
               ) : (

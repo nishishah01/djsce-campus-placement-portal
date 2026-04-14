@@ -44,6 +44,7 @@ export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     name: "",
+    sapId: "",
     dob: "",
     department: "",
     score10th: "",
@@ -56,6 +57,7 @@ export default function StudentProfile() {
     if (student) {
       setForm({
         name: student.name ?? "",
+        sapId: student.sapId ?? "",
         dob: student.dob ?? "",
         department: student.department ?? "",
         score10th: String(student.score10th ?? ""),
@@ -85,11 +87,11 @@ export default function StudentProfile() {
     const payload: Record<string, any> = {
       // always send non-editable fields to satisfy PUT (if needed, we use PATCH so this is fine)
       id: student.id,
-      sapId: student.sapId,
       email: student.email,
       password: student.password ?? "password123",
       // editable fields
       name: form.name.trim(),
+      sapId: form.sapId.trim(),
       dob: form.dob,
       department: form.department,
       score10th: parseFloat(form.score10th),
@@ -164,6 +166,13 @@ export default function StudentProfile() {
             Edit Profile
           </Button>
         </div>
+
+        {/* SAP ID missing warning */}
+        {!student.sapId && (
+          <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-400">
+            ⚠️ <strong>SAP ID not set.</strong> Please edit your profile to add your SAP ID — it is required for application processing by recruiters and coordinators.
+          </div>
+        )}
 
         {/* ── Personal Details card ── */}
         <Card className="glass-card">
@@ -283,6 +292,18 @@ export default function StudentProfile() {
                 />
               </div>
 
+              {/* SAP ID */}
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-sapid">SAP ID</Label>
+                <Input
+                  id="edit-sapid"
+                  value={form.sapId}
+                  onChange={(e) => handleField("sapId", e.target.value)}
+                  placeholder="e.g. 500091234"
+                />
+                <p className="text-xs text-muted-foreground">Your SAP ID is visible to recruiters and coordinators on your application.</p>
+              </div>
+
               {/* Date of Birth */}
               <div className="space-y-1.5">
                 <Label htmlFor="edit-dob">Date of Birth</Label>
@@ -359,8 +380,7 @@ export default function StudentProfile() {
 
               {/* Read-only notice */}
               <p className="text-xs text-muted-foreground">
-                SAP ID and email cannot be changed. Contact your placement coordinator
-                for corrections.
+                Email cannot be changed. Contact your placement coordinator for corrections.
               </p>
 
               {/* Actions */}
