@@ -28,7 +28,7 @@ class Job(models.Model):
     role = models.CharField(max_length=255)
     stipend = models.CharField(max_length=255)
     eligibleDepartments = models.JSONField(default=list)
-    deadline = models.DateField()
+    deadline = models.CharField(max_length=50)  # "YYYY-MM-DD" or "YYYY-MM-DD HH:MM IST"
     description = models.TextField(blank=True, null=True)
     jdUrl = models.URLField(blank=True, null=True)
     jdPdf = CloudinaryField('job_description', resource_type='raw', blank=True, null=True)

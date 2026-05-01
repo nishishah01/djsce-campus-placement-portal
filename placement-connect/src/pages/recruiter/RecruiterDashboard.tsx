@@ -1,8 +1,7 @@
 import { useJobs, useApplications, useStudents } from "@/hooks/useApi";
-import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase, Users, FileText, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import DashboardLayout from "@/components/DashboardLayout";
+import { Briefcase, Users, CheckCircle, Building2 } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -14,8 +13,9 @@ import {
   Cell,
 } from "recharts";
 
-const DEPT_COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
-const CGPA_COLORS = ["#ef4444", "#f59e0b", "#10b981", "#06b6d4", "#6366f1"];
+const TEAL = "#2cb5a0";
+const DEPT_COLORS = [TEAL, "#34c5af", "#1a9d8a", "#0d8573", "#45d4bc", "#22b09c", "#57e0ca", "#10917f"];
+const CGPA_COLORS = ["#ef4444", "#f59e0b", TEAL, "#06b6d4", "#6366f1"];
 const CGPA_RANGES = ["< 6", "6 – 7", "7 – 8", "8 – 9", "9 – 10"];
 
 function getCgpaRange(cgpa: number): string {
@@ -28,13 +28,14 @@ function getCgpaRange(cgpa: number): string {
 
 const tooltipStyle = {
   contentStyle: {
-    background: "hsl(var(--card))",
-    border: "1px solid hsl(var(--border))",
+    background: "#fff",
+    border: "1px solid #e5e7eb",
     borderRadius: 8,
-    fontSize: 13,
+    fontSize: 12,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
   },
-  labelStyle: { color: "hsl(var(--foreground))", fontWeight: 600 },
-  itemStyle: { color: "hsl(var(--muted-foreground))" },
+  labelStyle: { color: "#111827", fontWeight: 600 },
+  itemStyle: { color: "#6b7280" },
 };
 
 export default function RecruiterDashboard() {
@@ -48,10 +49,10 @@ export default function RecruiterDashboard() {
   const applicants = applications.filter((a) => myJobIds.has(a.jobId));
 
   const stats = [
-    { label: "Jobs Posted", value: myJobs.length, icon: Briefcase, color: "text-primary" },
-    { label: "Total Applicants", value: applicants.length, icon: Users, color: "text-info" },
-    { label: "Shortlisted", value: applicants.filter((a) => a.status === "shortlisted").length, icon: TrendingUp, color: "text-success" },
-    { label: "Pending Review", value: applicants.filter((a) => a.status === "pending").length, icon: FileText, color: "text-warning" },
+    { label: "Jobs Posted", value: myJobs.length, icon: Briefcase, color: TEAL, bg: "#e6f9f6" },
+    { label: "Total Applicants", value: applicants.length, icon: Users, color: "#3b82f6", bg: "#eff6ff" },
+    { label: "Shortlisted", value: applicants.filter((a) => a.status === "shortlisted").length, icon: CheckCircle, color: "#10b981", bg: "#ecfdf5" },
+    { label: "Pending Review", value: applicants.filter((a) => a.status === "pending").length, icon: Building2, color: "#f59e0b", bg: "#fffbeb" },
   ];
 
   // Department-wise breakdown (among this recruiter's applicants)
@@ -78,108 +79,115 @@ export default function RecruiterDashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Page title */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Recruiter Dashboard</h1>
-          <p className="text-muted-foreground">Manage your job postings and review applicants</p>
+          <h1 className="text-xl font-bold text-gray-800">Recruiter Dashboard</h1>
+          <p className="text-xs text-gray-400 mt-0.5">Manage your job postings and review applicants</p>
         </div>
 
         {/* Stat cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <Card key={s.label} className="glass-card">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className={`rounded-lg bg-muted p-2.5 ${s.color}`}>
-                  <s.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div
+              key={s.label}
+              className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4"
+            >
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-xl shrink-0"
+                style={{ background: s.bg }}
+              >
+                <s.icon className="h-6 w-6" style={{ color: s.color }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{s.value}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Analytics charts */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Charts */}
+        <div className="grid gap-5 lg:grid-cols-2">
           {/* Department-wise Applications */}
-          <Card className="glass-card">
-            <CardContent className="p-5">
-              <h2 className="text-lg font-semibold text-foreground">Department-wise Applicants</h2>
-              <p className="mb-4 text-xs text-muted-foreground">Breakdown of your applicants by department</p>
-              {deptData.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No applicants yet.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={deptData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="dept" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <YAxis allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <Tooltip {...tooltipStyle} formatter={(v) => [v, "Applicants"]} />
-                    <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Applicants">
-                      {deptData.map((_, i) => (
-                        <Cell key={i} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h2 className="text-sm font-bold text-gray-700 mb-1">Department-wise Applicants</h2>
+            <p className="text-xs text-gray-400 mb-4">Breakdown of your applicants by department</p>
+            {deptData.length === 0 ? (
+              <p className="py-10 text-center text-sm text-gray-400">No applicants yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={deptData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="dept" tick={{ fill: "#9ca3af", fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fill: "#9ca3af", fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} formatter={(v) => [v, "Applicants"]} />
+                  <Bar dataKey="count" radius={[5, 5, 0, 0]} name="Applicants">
+                    {deptData.map((_, i) => (
+                      <Cell key={i} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
           {/* CGPA Range Distribution */}
-          <Card className="glass-card">
-            <CardContent className="p-5">
-              <h2 className="text-lg font-semibold text-foreground">CGPA Range Distribution</h2>
-              <p className="mb-4 text-xs text-muted-foreground">CGPA profile of your applicants</p>
-              {applicants.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No applicants yet.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={cgpaData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="range" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <YAxis allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <Tooltip {...tooltipStyle} formatter={(v) => [v, "Students"]} />
-                    <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Students">
-                      {cgpaData.map((_, i) => (
-                        <Cell key={i} fill={CGPA_COLORS[i % CGPA_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h2 className="text-sm font-bold text-gray-700 mb-1">CGPA Range Distribution</h2>
+            <p className="text-xs text-gray-400 mb-4">CGPA profile of your applicants</p>
+            {applicants.length === 0 ? (
+              <p className="py-10 text-center text-sm text-gray-400">No applicants yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={cgpaData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="range" tick={{ fill: "#9ca3af", fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fill: "#9ca3af", fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} formatter={(v) => [v, "Students"]} />
+                  <Bar dataKey="count" radius={[5, 5, 0, 0]} name="Students">
+                    {cgpaData.map((_, i) => (
+                      <Cell key={i} fill={CGPA_COLORS[i % CGPA_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
 
         {/* Recent Applicants */}
-        <Card className="glass-card">
-          <CardContent className="p-5">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Recent Applicants</h2>
-            <div className="space-y-3">
-              {applicants.slice(0, 5).map((app) => {
-                const student = students.find((s) => s.id === app.studentId);
-                const job = jobs.find((j) => j.id === app.jobId);
-                return (
-                  <div key={app.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <h2 className="text-sm font-bold text-gray-700 mb-4">Recent Applicants</h2>
+          <div className="space-y-2">
+            {applicants.slice(0, 5).map((app) => {
+              const student = students.find((s) => s.id === app.studentId);
+              const job = jobs.find((j) => j.id === app.jobId);
+              return (
+                <div key={app.id} className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ background: TEAL }}
+                    >
+                      {student?.name?.charAt(0)?.toUpperCase() ?? "?"}
+                    </div>
                     <div>
-                      <p className="font-medium text-foreground">{student?.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm font-semibold text-gray-800">{student?.name}</p>
+                      <p className="text-xs text-gray-400">
                         {job?.role} · {student?.department}
                         {student?.cgpa ? ` · CGPA ${student.cgpa}` : ""}
                       </p>
                     </div>
-                    <span className="text-xs text-muted-foreground">{new Date(app.appliedAt).toLocaleDateString()}</span>
                   </div>
-                );
-              })}
-              {applicants.length === 0 && (
-                <p className="py-4 text-center text-sm text-muted-foreground">No applicants yet.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  <span className="text-xs text-gray-400">{new Date(app.appliedAt).toLocaleDateString()}</span>
+                </div>
+              );
+            })}
+            {applicants.length === 0 && (
+              <p className="py-6 text-center text-sm text-gray-400">No applicants yet.</p>
+            )}
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

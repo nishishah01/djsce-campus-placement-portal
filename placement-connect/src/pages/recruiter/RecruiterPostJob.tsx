@@ -30,6 +30,7 @@ export default function RecruiterPostJob() {
     location: "",
     type: "Full-Time",
     deadline: "",
+    deadlineTime: "23:59",
     description: "",
     jdUrl: "",
     jdPdf: null as File | null,
@@ -56,6 +57,11 @@ export default function RecruiterPostJob() {
       return;
     }
 
+    // Combine date + time into one deadline string (stored as "YYYY-MM-DD HH:MM IST")
+    const deadlineCombined = form.deadlineTime
+      ? `${form.deadline} ${form.deadlineTime} IST`
+      : form.deadline;
+
     const jobData = {
       id: `j${Date.now()}`,
       companyName: form.companyName,
@@ -63,7 +69,7 @@ export default function RecruiterPostJob() {
       stipend: form.stipend,
       location: form.location,
       type: form.type,
-      deadline: form.deadline,
+      deadline: deadlineCombined,
       description: form.description,
       jdUrl: form.jdUrl,
       postedBy: userId,
@@ -80,7 +86,7 @@ export default function RecruiterPostJob() {
       formData.append('stipend', jobData.stipend);
       formData.append('location', jobData.location);
       formData.append('type', jobData.type);
-      formData.append('deadline', jobData.deadline);
+      formData.append('deadline', deadlineCombined);
       formData.append('description', jobData.description || '');
       formData.append('jdUrl', jobData.jdUrl || '');
       formData.append('postedBy', jobData.postedBy);
@@ -93,7 +99,7 @@ export default function RecruiterPostJob() {
     createJob(dataToSend, {
       onSuccess: () => {
         toast.success("Job posted successfully!");
-        setForm({ companyName: "", role: "", stipend: "", location: "", type: "Full-Time", deadline: "", description: "", jdUrl: "", jdPdf: null, eligibleDepartments: [] });
+        setForm({ companyName: "", role: "", stipend: "", location: "", type: "Full-Time", deadline: "", deadlineTime: "23:59", description: "", jdUrl: "", jdPdf: null, eligibleDepartments: [] });
         setJdType("text");
       },
       onError: () => {
@@ -105,10 +111,13 @@ export default function RecruiterPostJob() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-2xl">
-        <h1 className="mb-6 text-2xl font-bold text-foreground">Post a New Job</h1>
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-gray-800">Post a New Job</h1>
+          <p className="text-xs text-gray-400 mt-0.5">Fill in the details to publish an opening</p>
+        </div>
 
-        <Card className="glass-card">
-          <CardContent className="p-6">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+          <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -142,11 +151,39 @@ export default function RecruiterPostJob() {
                 </div>
               </div>
               <div>
-                <Label>Application Deadline</Label>
-                <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} required />
+                <Label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Application Deadline
+                  <span className="ml-1.5 text-xs font-normal text-gray-400">(IST)</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={form.deadline}
+                    onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+                    required
+                    className="flex-1"
+                  />
+                  <div className="relative flex-shrink-0 w-36">
+                    <Input
+                      type="time"
+                      value={form.deadlineTime}
+                      onChange={(e) => setForm({ ...form, deadlineTime: e.target.value })}
+                      className="pr-10"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 pointer-events-none">
+                      IST
+                    </span>
+                  </div>
+                </div>
+                {form.deadline && form.deadlineTime && (
+                  <p className="mt-1 text-xs text-teal-600">
+                    Deadline: {new Date(`${form.deadline}T${form.deadlineTime}`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}{" at "}
+                    {new Date(`${form.deadline}T${form.deadlineTime}`).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })} IST
+                  </p>
+                )}
               </div>
-              <div className="rounded-md border border-border p-4 bg-muted/20">
-                <Label className="mb-3 block text-base font-semibold">Job Description Format</Label>
+              <div className="rounded-xl border border-gray-100 p-4 bg-gray-50">
+                <Label className="mb-3 block text-sm font-semibold text-gray-700">Job Description Format</Label>
                 <div className="mb-4 flex gap-4">
                   <label className="flex cursor-pointer items-center gap-2">
                     <input type="radio" name="jdType" checked={jdType === "text"} onChange={() => setJdType("text")} className="cursor-pointer" />
@@ -178,10 +215,16 @@ export default function RecruiterPostJob() {
                   ))}
                 </div>
               </div>
-              <Button type="submit" className="w-full">Post Job</Button>
+              <button
+                type="submit"
+                className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-all"
+                style={{ background: "#2cb5a0" }}
+              >
+                Post Job
+              </button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

@@ -54,7 +54,10 @@ export default function CoordinatorApplications() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-foreground">All Applications</h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">All Applications</h1>
+            <p className="text-xs text-gray-400 mt-0.5">{filteredApps.length} total records</p>
+          </div>
           <div className="flex gap-3">
             <Select value={filterCompany} onValueChange={setFilterCompany}>
               <SelectTrigger className="w-48">
@@ -73,19 +76,19 @@ export default function CoordinatorApplications() {
           </div>
         </div>
 
-        <Card className="glass-card overflow-hidden">
-          <CardContent className="p-0">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>SAP ID</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>CGPA</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Student</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">SAP ID</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Department</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">CGPA</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</TableHead>
+                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -111,8 +114,8 @@ export default function CoordinatorApplications() {
                 })}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

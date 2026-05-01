@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApplications, useCreateApplication, useJobs } from "@/hooks/useApi";
+import { formatDeadline, isDeadlinePassed } from "@/lib/deadlineUtils";
 import { Calendar, IndianRupee, MapPin, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,8 +25,8 @@ export default function StudentJobs() {
 
   const filteredJobs = jobs.filter(
     (j) =>
-      j.companyName.toLowerCase().includes(search.toLowerCase()) ||
-      j.role.toLowerCase().includes(search.toLowerCase())
+      (j.companyName.toLowerCase().includes(search.toLowerCase()) ||
+       j.role.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleApply = () => {
@@ -74,14 +75,17 @@ export default function StudentJobs() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Job Openings</h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">Job Openings</h1>
+            <p className="text-xs text-gray-400 mt-0.5">{filteredJobs.length} positions available</p>
+          </div>
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Search companies or roles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 border-gray-200 focus:border-teal-400"
             />
           </div>
         </div>
@@ -90,47 +94,74 @@ export default function StudentJobs() {
           {filteredJobs.map((job) => {
             const applied = applications.some((a) => a.jobId === job.id && a.studentId === userId);
             return (
-              <Card key={job.id} className="glass-card">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{job.role}</CardTitle>
-                      <p className="text-sm font-medium text-primary">{job.companyName}</p>
-                    </div>
-                    <Badge variant={job.type === "Internship" ? "outline" : "default"}>{job.type}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>
-                  {job.jdPdf && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(job.jdPdf, '_blank')}
-                      className="w-full"
+              <div key={job.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
+                {/* Card header */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
+                      style={{ background: "#2cb5a0" }}
                     >
-                      View Job Description PDF
-                    </Button>
-                  )}
-                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{job.location}</span>
-                    <span className="flex items-center gap-1"><IndianRupee className="h-3.5 w-3.5" />{job.stipend}</span>
-                    <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Due {new Date(job.deadline).toLocaleDateString()}</span>
+                      {job.companyName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">{job.role}</p>
+                      <p className="text-xs font-medium" style={{ color: "#2cb5a0" }}>{job.companyName}</p>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {job.eligibleDepartments.map((d) => (
-                      <Badge key={d} variant="secondary" className="text-xs">{d}</Badge>
-                    ))}
-                  </div>
-                  <Button
-                    className="w-full"
-                    disabled={applied}
-                    onClick={() => setApplyJobId(job.id)}
+                  <span
+                    className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={job.type === "Internship"
+                      ? { background: "#eff6ff", color: "#3b82f6" }
+                      : { background: "#e6f9f6", color: "#2cb5a0" }
+                    }
                   >
-                    {applied ? "Already Applied" : "Apply Now"}
+                    {job.type}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-gray-500 line-clamp-2">{job.description}</p>
+
+                {/* JD PDF */}
+                {job.jdPdf && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(job.jdPdf, '_blank')}
+                    className="w-full border-gray-200 text-gray-600 hover:border-teal-400 hover:text-teal-600 text-xs"
+                  >
+                    View Job Description PDF
                   </Button>
-                </CardContent>
-              </Card>
+                )}
+
+                {/* Details row */}
+                <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{job.location}</span>
+                  <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{job.stipend}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />Due {formatDeadline(job.deadline)}</span>
+                </div>
+
+                {/* Eligible departments */}
+                <div className="flex flex-wrap gap-1">
+                  {job.eligibleDepartments.map((d) => (
+                    <span key={d} className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">{d}</span>
+                  ))}
+                </div>
+
+                {/* Apply button */}
+                <button
+                  className="mt-1 w-full rounded-lg py-2.5 text-sm font-semibold transition-all"
+                  style={applied
+                    ? { background: "#f3f4f6", color: "#9ca3af", cursor: "not-allowed" }
+                    : { background: "#2cb5a0", color: "#fff" }
+                  }
+                  disabled={applied}
+                  onClick={() => setApplyJobId(job.id)}
+                >
+                  {applied ? "Already Applied" : "Apply Now"}
+                </button>
+              </div>
             );
           })}
         </div>

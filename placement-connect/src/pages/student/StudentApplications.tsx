@@ -4,11 +4,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const statusColors: Record<string, string> = {
-  pending: "bg-warning/10 text-warning border-warning/20",
-  shortlisted: "bg-info/10 text-info border-info/20",
-  accepted: "bg-success/10 text-success border-success/20",
-  rejected: "bg-destructive/10 text-destructive border-destructive/20",
+const statusColors: Record<string, { bg: string; color: string }> = {
+  pending: { bg: "#fffbeb", color: "#d97706" },
+  shortlisted: { bg: "#eff6ff", color: "#3b82f6" },
+  accepted: { bg: "#ecfdf5", color: "#10b981" },
+  rejected: { bg: "#fef2f2", color: "#ef4444" },
 };
 
 export default function StudentApplications() {
@@ -20,34 +20,47 @@ export default function StudentApplications() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">My Applications</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">My Applications</h1>
+          <p className="text-xs text-gray-400 mt-0.5">{myApps.length} total applications</p>
+        </div>
 
         {myApps.length === 0 ? (
-          <Card className="glass-card">
-            <CardContent className="py-12 text-center text-muted-foreground">
-              You haven't applied to any jobs yet.
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-12 text-center text-gray-400 text-sm">
+            You haven't applied to any jobs yet.
+          </div>
         ) : (
           <div className="space-y-3">
             {myApps.map((app) => {
               const job = jobs.find((j) => j.id === app.jobId);
               if (!job) return null;
+              const sc = statusColors[app.status] ?? { bg: "#f3f4f6", color: "#6b7280" };
               return (
-                <Card key={app.id} className="glass-card">
-                  <CardContent className="flex items-center justify-between p-5">
-                    <div>
-                      <p className="font-semibold text-foreground">{job.role}</p>
-                      <p className="text-sm text-muted-foreground">{job.companyName} · {job.location}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Applied on {new Date(app.appliedAt).toLocaleDateString()}
-                      </p>
+                <div key={app.id} className="bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center justify-between p-5">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
+                        style={{ background: "#2cb5a0" }}
+                      >
+                        {job.companyName.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{job.role}</p>
+                        <p className="text-xs text-gray-400">{job.companyName} · {job.location}</p>
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          Applied on {new Date(app.appliedAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <Badge className={statusColors[app.status]} variant="outline">
+                    <span
+                      className="text-xs font-semibold px-3 py-1 rounded-full"
+                      style={{ background: sc.bg, color: sc.color }}
+                    >
                       {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                    </Badge>
-                  </CardContent>
-                </Card>
+                    </span>
+                  </div>
+                </div>
               );
             })}
           </div>

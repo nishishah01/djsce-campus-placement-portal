@@ -1,63 +1,51 @@
-import os
-import io
-import re
-import uuid
+import os #to handle files
+import io #to read pdfs, docs in memory
+import re #regex pattern matching
+import uuid #unique file names
 from datetime import datetime, timedelta
 from typing import Tuple, Optional, List, Dict, Any
 from fastapi import FastAPI, Form, File, UploadFile, Request, BackgroundTasks, HTTPException
-import requests
+import requests #to fetch resumes from URL
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.staticfiles import StaticFiles #to serve uploaded files
 from docx import Document
 from pdfminer.high_level import extract_text
 from pdf2image import convert_from_bytes
-import pytesseract
-import spacy
+import pytesseract #OCR for scanned PDFs
+import spacy #semantic similarity
 import nltk
 
-# -----------------------
-# NLTK Stopwords Fix
-# -----------------------
+#Stop words in NLTK (Natural Language Toolkit) are high-frequency words 
+# (e.g., "the," "is," "and") that are often removed 
+# during text preprocessing to improve computational efficiency and focus on meaningful content
 nltk_data_dir = os.path.join(os.path.dirname(__file__), "nltk_data")
-nltk.data.path.append(nltk_data_dir)
+nltk.data.path.append(nltk_data_dir)  #stores stopwords locally instead of downloading every time
 from nltk.corpus import stopwords
-
 try:
     STOP_WORDS = set(stopwords.words("english"))
 except LookupError:
-    nltk.download("stopwords", download_dir=nltk_data_dir)
+    nltk.download("stopwords", download_dir=nltk_data_dir) #if stopwords not found, download to local directory
     STOP_WORDS = set(stopwords.words("english"))
 
-# -----------------------
-# spaCy
-# -----------------------
+
 try:
-    nlp = spacy.load("en_core_web_md")
+    nlp = spacy.load("en_core_web_md") #loading medium NLP model for better semantic similarity; fallback to small if not available
 except Exception:
     try:
         nlp = spacy.load("en_core_web_sm")
     except Exception:
         nlp = spacy.blank("en")
 
-# -----------------------
-# FastAPI app
-# -----------------------
-app = FastAPI(title="Professional ATS CV Checker", version="1.0.0")
+app = FastAPI(title="Professional ATS CV Checker", version="1.0.0") #creates api instance with title and version
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"]
-)
+)#allows requests from frrontend
 
-# -----------------------
-# Upload folder & static mount
-# -----------------------
+
 uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
-
-# -----------------------
-# Allowed extensions
-# -----------------------
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")#creates a folder if not exist
 ALLOWED_EXTS = [".pdf", ".docx"]
 
 # -----------------------
@@ -73,12 +61,12 @@ BASIC_WORDS = set([
 ])
 
 def get_extension(filename: str) -> str:
-    return "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    return "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else "" #extracts pdfs or docs
 
 def save_upload_file(upload_file: UploadFile) -> str:
     filename = os.path.basename(getattr(upload_file, "filename", "file"))
-    safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", filename)
-    dest_name = f"{uuid.uuid4().hex}_{safe_name}"
+    safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", filename) #sanitizes filename to prevent directory traversal and unsafe characters
+    dest_name = f"{uuid.uuid4().hex}_{safe_name}" #generates unique filename to avoid collisions
     dest_path = os.path.join(uploads_dir, dest_name)
 
     upload_file.file.seek(0)
@@ -99,7 +87,7 @@ def cleanup_old_files():
 def extract_text_from_bytes(data: bytes, ext: str) -> str:
     if ext == ".docx":
         try:
-            doc = Document(io.BytesIO(data))
+            doc = Document(io.BytesIO(data))  #reads word file
             text = "\n".join(p.text for p in doc.paragraphs)
             return text
         except Exception:
@@ -113,7 +101,7 @@ def extract_text_from_bytes(data: bytes, ext: str) -> str:
         except Exception:
             pass
         try:
-            images = convert_from_bytes(data)
+            images = convert_from_bytes(data) #if pdf is scanned, convert to images and use OCR to extract text
             text = "\n".join([pytesseract.image_to_string(img) for img in images])
             return text
         except Exception:
@@ -132,7 +120,7 @@ def extract_text_from_upload(upload_file) -> Tuple[str, str]:
     
     return extract_text_from_bytes(data, ext), ext
 
-def clean_text(text: str) -> str:
+def clean_text(text: str) -> str: #lowercase and removes special characters
     text = text.lower()
     text = re.sub(r"[^a-z0-9\s]", " ", text)
     return text
@@ -145,7 +133,7 @@ def extract_keywords(text: str):
 
 def check_cv_format(text: str):
     warnings = []
-    sections = ["experience", "education", "skills", "projects"]
+    sections = ["experience", "education", "skills", "projects","certifications","achievements"]
     for s in sections:
         if s not in text.lower():
             warnings.append(f"Section '{s}' is missing")
@@ -158,6 +146,11 @@ def check_cv_format(text: str):
         warnings.append("Few bullet points; consider using bullets for clarity")
     return warnings
 
+
+#uses spaCy similarity, which compares the semantic meaning of words rather than just exact matches, to find relevant keywords in the resume that match the job description, 
+# even if they are not identical. 
+# This allows for a more flexible and intelligent matching process, 
+# improving the accuracy of the CV checker.
 def semantic_match(resume_keywords, jd_keywords):
     matched = set()
     missing = set(jd_keywords)
@@ -185,7 +178,12 @@ def compute_score(resume_text: str, job_description: str):
     resume_keywords = extract_keywords(resume_text)
     jd_keywords = extract_keywords(job_description)
     matched, missing = semantic_match(resume_keywords, jd_keywords)
-
+#score calculation is based 
+# on the percentage of matched keywords 
+# and the number of formatting warnings.
+#  The final score is an average 
+# of the keyword match score and the format score, 
+# giving a balanced evaluation of both content relevance and presentation quality.
     keyword_score = int(len(matched) / len(jd_keywords) * 100) if jd_keywords else 0
     warnings = check_cv_format(resume_text)
     format_score = max(0, 100 - len(warnings) * 10)

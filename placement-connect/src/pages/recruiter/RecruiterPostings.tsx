@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApplications, useJobs, useStudents, useUpdateApplication } from "@/hooks/useApi";
-import { Download, Users, TrendingUp, AlertCircle } from "lucide-react";
+import { AlertCircle, Download, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
 
 export default function RecruiterPostings() {
@@ -62,18 +62,21 @@ export default function RecruiterPostings() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">My Job Postings</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">My Job Postings</h1>
+          <p className="text-xs text-gray-400 mt-0.5">{myJobs.length} positions posted</p>
+        </div>
 
         {myJobs.length === 0 ? (
-          <Card className="glass-card">
-            <CardContent className="py-12 text-center text-muted-foreground">No jobs posted yet.</CardContent>
-          </Card>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="py-12 text-center text-gray-400 text-sm">No jobs posted yet.</div>
+          </div>
         ) : (
           <Accordion type="single" collapsible className="space-y-3">
             {myJobs.map((job) => {
               const apps = applications.filter((a) => a.jobId === job.id);
               return (
-                <AccordionItem key={job.id} value={job.id} className="glass-card rounded-xl border px-4">
+                <AccordionItem key={job.id} value={job.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4">
                   <AccordionTrigger className="hover:no-underline">
                     <div className="flex items-center gap-3 text-left">
                       <div>
@@ -118,7 +121,7 @@ export default function RecruiterPostings() {
                               </label>
                               <input type="file" id={`jdFile-${job.id}`} className="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" accept=".pdf,.docx" />
                             </div>
-                            <Button 
+                            <Button
                               onClick={() => handleRankApplicants(job.id, apps)}
                               disabled={isRanking === job.id}
                               className="mt-4 sm:mt-0"
@@ -135,10 +138,10 @@ export default function RecruiterPostings() {
                         </div>
 
                         <div className="space-y-2">
-                        {(() => {
-                           let displayApps = [...apps];
-                           const rankings = atsRankings[job.id];
-                           if (rankings) {
+                          {(() => {
+                            let displayApps = [...apps];
+                            const rankings = atsRankings[job.id];
+                            if (rankings) {
                               const rankedIds = rankings.map((r: any) => r.id);
                               // Sort by rank order
                               displayApps = displayApps.sort((a, b) => {
@@ -149,76 +152,76 @@ export default function RecruiterPostings() {
                                 if (rankB === -1) return -1;
                                 return rankA - rankB;
                               });
-                           }
-                           return displayApps.map((app) => {
-                             const student = students.find((s) => s.id === app.studentId);
-                             const rankData = rankings?.find((r: any) => r.id === app.id);
-                             return (
-                            <div key={app.id} className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium text-foreground">{student?.name}</p>
-                                  {rankData && (
-                                    <Badge variant={rankData.score >= 50 ? "default" : "destructive"} className="ml-2">
-                                      ATS Score: {rankData.score}%
-                                    </Badge>
-                                  )}
-                                  {rankData?.error && (
-                                    <Badge variant="destructive" className="ml-2" title={rankData.error}>
-                                      <AlertCircle className="h-3 w-3 mr-1"/> Error
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {student?.department} · CGPA: {student?.cgpa} · SAP: {student?.sapId}
-                                </p>
-                                {app.customResume ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="mt-2 px-2"
-                                    onClick={() => window.open(app.customResume, '_blank')}
-                                  >
-                                    Download Company Resume
-                                  </Button>
-                                ) : student?.resumeUrl ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="mt-2 px-2"
-                                    onClick={() => window.open(student.resumeUrl, '_blank')}
-                                  >
-                                    Download Default Resume
-                                  </Button>
-                                ) : (
-                                  <p className="mt-2 text-xs text-muted-foreground">No resume uploaded.</p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline">{app.status}</Badge>
-                                {app.status === 'pending' && (
-                                  <div className="flex gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => updateApplication({ id: app.id, data: { status: 'shortlisted' } })}
-                                    >
-                                      Shortlist
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => updateApplication({ id: app.id, data: { status: 'rejected' } })}
-                                    >
-                                      Reject
-                                    </Button>
+                            }
+                            return displayApps.map((app) => {
+                              const student = students.find((s) => s.id === app.studentId);
+                              const rankData = rankings?.find((r: any) => r.id === app.id);
+                              return (
+                                <div key={app.id} className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium text-foreground">{student?.name}</p>
+                                      {rankData && (
+                                        <Badge variant={rankData.score >= 50 ? "default" : "destructive"} className="ml-2">
+                                          ATS Score: {rankData.score}%
+                                        </Badge>
+                                      )}
+                                      {rankData?.error && (
+                                        <Badge variant="destructive" className="ml-2" title={rankData.error}>
+                                          <AlertCircle className="h-3 w-3 mr-1" /> Error
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {student?.department} · CGPA: {student?.cgpa} · SAP: {student?.sapId}
+                                    </p>
+                                    {app.customResume ? (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="mt-2 px-2"
+                                        onClick={() => window.open(app.customResume, '_blank')}
+                                      >
+                                        Download Company Resume
+                                      </Button>
+                                    ) : student?.resumeUrl ? (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="mt-2 px-2"
+                                        onClick={() => window.open(student.resumeUrl, '_blank')}
+                                      >
+                                        Download Default Resume
+                                      </Button>
+                                    ) : (
+                                      <p className="mt-2 text-xs text-muted-foreground">No resume uploaded.</p>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                         }); // Close the displayApps.map function
-                        })()}
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline">{app.status}</Badge>
+                                    {app.status === 'pending' && (
+                                      <div className="flex gap-1">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => updateApplication({ id: app.id, data: { status: 'shortlisted' } })}
+                                        >
+                                          Shortlist
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          onClick={() => updateApplication({ id: app.id, data: { status: 'rejected' } })}
+                                        >
+                                          Reject
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }); // Close the displayApps.map function
+                          })()}
                         </div>
                       </div>
                     )}
