@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.conf import settings
+# pyrefly: ignore [missing-import]
 from .models import Student, Job, Application, Recruiter
+import re
+from datetime import datetime
 
 
 def _to_https(url: str) -> str:
@@ -51,9 +54,10 @@ class JobSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
+        #api response ko customize karega before sending it to frontend
         data = super().to_representation(instance)
         if data.get('jdPdf'):
-            data['jdPdf'] = _to_https(str(data['jdPdf']))
+            data['jdPdf'] = _to_https(str(data['jdPdf']))#cause cloudinary doesn't return https
         return data
 
 
@@ -61,6 +65,30 @@ class ApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = '__all__'
+
+    def validate(self, data):
+        job_id = data.get('jobId')
+        if job_id:
+            try:
+                job = Job.objects.get(id=job_id)
+                deadline_str = job.deadline
+                if deadline_str:
+                    match = re.match(r'^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s*IST$', deadline_str, re.IGNORECASE)
+                    if match:
+                        date_part, time_part = match.groups()
+                        dt = datetime.strptime(f"{date_part} {time_part}", "%Y-%m-%d %H:%M")
+                        if datetime.now() > dt:
+                            raise serializers.ValidationError("This application is no longer accepting requests....")
+                    else:
+                        try:
+                            dt = datetime.strptime(deadline_str, "%Y-%m-%d")
+                            if datetime.now() > dt:
+                                raise serializers.ValidationError("This application is no longer accepting requests....")
+                        except ValueError:
+                            pass
+            except Job.DoesNotExist:
+                pass
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

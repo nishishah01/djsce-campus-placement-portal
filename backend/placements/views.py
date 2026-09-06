@@ -3,8 +3,11 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.decorators import action
 from django.http import HttpResponse
 import csv
+# pyrefly: ignore [missing-import]
 from .models import Student, Job, Application, Recruiter
+# pyrefly: ignore [missing-import]
 from .serializers import StudentSerializer, JobSerializer, ApplicationSerializer, RecruiterSerializer
+# pyrefly: ignore [missing-import]
 from .emails import send_job_notification_to_students
 
 

@@ -1,0 +1,189 @@
+# DJSCE Campus Placement Portal — API Route ↔ Frontend Mapping
+
+> **Base URL (Backend):** `http://127.0.0.1:8000/api/`  
+> **External ATS Service:** `http://127.0.0.1:8081/api/`  
+> **Frontend Hook File:** `placement-connect/src/hooks/useApi.ts`  
+> **Backend Views File:** `backend/placements/views.py`  
+> **Backend URLs File:** `backend/placements/urls.py`
+
+---
+
+## Architecture Overview
+
+```
+Frontend (React + Vite)                    Backend (Django REST Framework)
+─────────────────────────────              ──────────────────────────────
+src/hooks/useApi.ts          ←──── HTTP ────→  placements/views.py
+  (React Query wrappers)                         (ModelViewSets)
+       │
+       ▼
+src/pages/**/*.tsx
+  (UI pages consume hooks)
+```
+
+All API calls are defined as **React Query** hooks in `useApi.ts` and imported by individual pages. There is **no direct `fetch()` in pages**, except for the custom CSV download (opened via `window.open`) and the external ATS ranking call in `RecruiterPostings.tsx`.
+
+---
+
+## 1. Students Endpoint — `/api/students/`
+
+| Method   | Full URL                         | Backend Action       | Hook in `useApi.ts`   |
+|----------|----------------------------------|----------------------|-----------------------|
+| `GET`    | `/api/students/`                 | List all students    | `useStudents()`       |
+| `POST`   | `/api/students/`                 | Create a student     | `useCreateStudent()`  |
+| `PATCH`  | `/api/students/{id}/`            | Partial update       | `useUpdateStudent()`  |
+| `PUT`    | `/api/students/{id}/`            | Full update (resume) | `useUpdateStudent()`  |
+
+> `useUpdateStudent` uses **PATCH** for JSON profile edits and **PUT** for FormData resume uploads.
+
+### Frontend Pages That Use This Endpoint
+
+| Page File | Route | Hooks Used | Purpose |
+|-----------|-------|------------|---------|
+| `pages/LoginPage.tsx` | `/` (login dialog) | `useStudents()`, `useCreateStudent()` | Look up student by SAP ID / email for login; create account on registration |
+| `pages/student/StudentDashboard.tsx` | `/student` | `useStudents()`, `useJobs()`, `useApplications()` | Display student name and personalized stats |
+| `pages/student/StudentProfile.tsx` | `/student/profile` | `useStudents()`, `useUpdateStudent()` | View and edit profile fields; upload resume to Cloudinary |
+| `pages/recruiter/RecruiterDashboard.tsx` | `/recruiter` | `useStudents()`, `useJobs()`, `useApplications()` | Build department & CGPA charts from applicant data |
+| `pages/recruiter/RecruiterPostings.tsx` | `/recruiter/postings` | `useStudents()`, `useApplications()`, `useJobs()` | Show student details (name, dept, CGPA, SAP ID) alongside each application |
+| `pages/coordinator/CoordinatorDashboard.tsx` | `/coordinator` | `useStudents()`, `useJobs()`, `useApplications()` | Portal-wide analytics charts |
+| `pages/coordinator/CoordinatorApplications.tsx` | `/coordinator/applications` | `useStudents()`, `useJobs()`, `useApplications()` | Full application table with student info; CSV export |
+| `pages/coordinator/CoordinatorStudents.tsx` | `/coordinator/students` | `useStudents()` | Browse/search all registered students |
+
+---
+
+## 2. Jobs Endpoint — `/api/jobs/`
+
+| Method   | Full URL                                        | Backend Action              | Hook in `useApi.ts`  |
+|----------|-------------------------------------------------|-----------------------------|----------------------|
+| `GET`    | `/api/jobs/`                                    | List all jobs               | `useJobs()`          |
+| `POST`   | `/api/jobs/`                                    | Create job + email students | `useCreateJob()`     |
+| `GET`    | `/api/jobs/{id}/download_applications/`         | Download applicants CSV     | Direct `window.open` |
+
+> **Side effect on POST:** `JobViewSet.perform_create()` automatically calls `send_job_notification_to_students()` which emails all eligible students (filtered by `eligibleDepartments`) via a background thread.
+
+### Frontend Pages That Use This Endpoint
+
+| Page File | Route | Hooks / Calls Used | Purpose |
+|-----------|-------|--------------------|---------|
+| `pages/student/StudentDashboard.tsx` | `/student` | `useJobs()` | Show recent active job openings |
+| `pages/student/StudentJobs.tsx` | `/student/jobs` | `useJobs()`, `useApplications()`, `useCreateApplication()` | Browse, filter, and apply to jobs |
+| `pages/student/StudentApplications.tsx` | `/student/applications` | `useJobs()`, `useApplications()` | Show job details alongside each application |
+| `pages/recruiter/RecruiterDashboard.tsx` | `/recruiter` | `useJobs()`, `useApplications()`, `useStudents()` | Filter jobs by `postedBy === userId` for stats |
+| `pages/recruiter/RecruiterPostJob.tsx` | `/recruiter/post` | `useCreateJob()` | Submit new job form (JSON or FormData with PDF) |
+| `pages/recruiter/RecruiterPostings.tsx` | `/recruiter/postings` | `useJobs()`, `useApplications()`, `useStudents()` | List own posted jobs; trigger CSV download via `window.open` |
+| `pages/coordinator/CoordinatorDashboard.tsx` | `/coordinator` | `useJobs()`, `useApplications()`, `useStudents()` | Company-wise application breakdown |
+| `pages/coordinator/CoordinatorApplications.tsx` | `/coordinator/applications` | `useJobs()`, `useApplications()`, `useStudents()` | Cross-reference job info for each application row |
+
+---
+
+## 3. Applications Endpoint — `/api/applications/`
+
+| Method   | Full URL                       | Backend Action              | Hook in `useApi.ts`         |
+|----------|--------------------------------|-----------------------------|-----------------------------|
+| `GET`    | `/api/applications/`           | List all applications       | `useApplications()`         |
+| `POST`   | `/api/applications/`           | Submit application          | `useCreateApplication()`    |
+| `PATCH`  | `/api/applications/{id}/`      | Update status               | `useUpdateApplication()`    |
+
+> `useCreateApplication` sends **FormData** if a custom resume file is attached, otherwise plain **JSON**.  
+> `useUpdateApplication` is used exclusively for status changes (`pending → shortlisted / rejected`).
+
+### Frontend Pages That Use This Endpoint
+
+| Page File | Route | Hooks Used | Purpose |
+|-----------|-------|------------|---------|
+| `pages/student/StudentDashboard.tsx` | `/student` | `useApplications()` | Count the student's own applications (all, shortlisted, pending) |
+| `pages/student/StudentJobs.tsx` | `/student/jobs` | `useApplications()`, `useCreateApplication()` | Check if already applied; submit new application with optional resume + cover note |
+| `pages/student/StudentApplications.tsx` | `/student/applications` | `useApplications()`, `useJobs()` | List all of the student's applications with status badges |
+| `pages/recruiter/RecruiterDashboard.tsx` | `/recruiter` | `useApplications()`, `useJobs()` | Count applicants for the recruiter's own jobs |
+| `pages/recruiter/RecruiterPostings.tsx` | `/recruiter/postings` | `useApplications()`, `useUpdateApplication()` | Show all applicants per job; Shortlist / Reject buttons call PATCH |
+| `pages/coordinator/CoordinatorDashboard.tsx` | `/coordinator` | `useApplications()` | Total applications count; accepted (placed) count |
+| `pages/coordinator/CoordinatorApplications.tsx` | `/coordinator/applications` | `useApplications()` | Full application table; client-side CSV export |
+
+---
+
+## 4. Recruiters Endpoint — `/api/recruiters/`
+
+| Method   | Full URL             | Backend Action          | Hook in `useApi.ts`       |
+|----------|----------------------|-------------------------|---------------------------|
+| `GET`    | `/api/recruiters/`   | List all recruiters     | `useRecruiters()`         |
+| `POST`   | `/api/recruiters/`   | Create recruiter        | `useCreateRecruiter()`    |
+
+### Frontend Pages That Use This Endpoint
+
+| Page File | Route | Hooks Used | Purpose |
+|-----------|-------|------------|---------|
+| `pages/LoginPage.tsx` | `/` (login dialog) | `useRecruiters()`, `useCreateRecruiter()` | Look up recruiter by email + password for login; create recruiter account on registration |
+
+---
+
+## 5. Custom Action — `/api/jobs/{id}/download_applications/`
+
+| Method | URL | Backend Handler | Triggered From |
+|--------|-----|-----------------|----------------|
+| `GET`  | `/api/jobs/{jobId}/download_applications/` | `JobViewSet.download_applications()` | `RecruiterPostings.tsx` — "CSV" button via `window.open(...)` |
+
+**What it returns:** A `text/csv` file with columns:  
+`Name, SAP ID, Email, Department, 10th Score, 12th Score, CGPA, Resume URL, Custom Resume URL, Cover Note, Status, Applied At`
+
+**Code location:** `backend/placements/views.py` — lines 45–72
+
+---
+
+## 6. External Service — ATS Resume Ranker
+
+| Method | URL | Triggered From |
+|--------|-----|----------------|
+| `POST` | `http://127.0.0.1:8081/api/rank` | `RecruiterPostings.tsx` — "Analyze & Rank Top 10" button |
+
+**This is NOT a Django route.** It calls a separate Python service running on port **8081** (the `CV-ATS-Checker` microservice in the repo).
+
+**Payload:** `FormData` with:
+- `job_description_file` — uploaded PDF/DOCX of the JD
+- `applicants` — JSON array of `{ id, name, resumeUrl }`
+
+**Response:** `{ rankings: [{ id, score, ... }] }` — sorted by ATS match score.
+
+**Code location:** `placement-connect/src/pages/recruiter/RecruiterPostings.tsx` — lines 21–59
+
+---
+
+## 7. Coordinator Auth — `public/coordinators.csv`
+
+Coordinators do **not** authenticate via the API. Instead, login reads a static CSV file served from `/coordinators.csv`:
+
+| CSV Column | Purpose |
+|------------|---------|
+| `Name` | Display name shown after login |
+| `SAP ID` | Used as the login identifier |
+| `Access Password` | Compared against entered password |
+
+**File location:** `placement-connect/public/coordinators.csv`  
+**Read in:** `pages/LoginPage.tsx` — lines 93–124 (via `fetch('/coordinators.csv')`)
+
+---
+
+## Complete Hook to Backend Route Summary
+
+| Hook | HTTP Method | Backend Route | Django ViewSet |
+|------|-------------|---------------|----------------|
+| `useStudents()` | GET | `/api/students/` | `StudentViewSet.list` |
+| `useCreateStudent()` | POST | `/api/students/` | `StudentViewSet.create` |
+| `useUpdateStudent()` | PATCH / PUT | `/api/students/{id}/` | `StudentViewSet.partial_update / update` |
+| `useJobs()` | GET | `/api/jobs/` | `JobViewSet.list` |
+| `useCreateJob()` | POST | `/api/jobs/` | `JobViewSet.perform_create` (+ email side-effect) |
+| `useApplications()` | GET | `/api/applications/` | `ApplicationViewSet.list` |
+| `useCreateApplication()` | POST | `/api/applications/` | `ApplicationViewSet.create` |
+| `useUpdateApplication()` | PATCH | `/api/applications/{id}/` | `ApplicationViewSet.partial_update` |
+| `useRecruiters()` | GET | `/api/recruiters/` | `RecruiterViewSet.list` |
+| `useCreateRecruiter()` | POST | `/api/recruiters/` | `RecruiterViewSet.create` |
+| *(direct window.open)* | GET | `/api/jobs/{id}/download_applications/` | `JobViewSet.download_applications` |
+| *(direct fetch)* | POST | `http://127.0.0.1:8081/api/rank` | External ATS service |
+
+---
+
+## Notes
+
+- All data fetching uses **React Query** — results are cached by `queryKey` and automatically invalidated after mutations (`onSuccess`).
+- There is **no authentication middleware** on the backend routes. Access control is entirely client-side via `AuthContext` + `localStorage`.
+- `StudentViewSet` and `JobViewSet` use `MultiPartParser` + `FormParser` in addition to `JSONParser` to support file uploads (resumes, JD PDFs) via Cloudinary.
+- Serializers apply a `_to_https()` helper on Cloudinary URLs (`resumeUrl`, `jdPdf`, `customResume`) to ensure HTTPS before sending to the frontend.

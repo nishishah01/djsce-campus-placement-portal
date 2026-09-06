@@ -109,26 +109,23 @@ def send_job_notification_to_students(job, students_queryset):
     QuerySet evaluated inside a new thread can silently return empty results.
     """
 
-    # ✅ Evaluate QuerySet eagerly in the main (request) thread
     recipient_emails = list(students_queryset.values_list('email', flat=True))
 
     if not recipient_emails:
         print("[EMAIL] No eligible students found — skipping notification.")
         return
 
-    # ✅ Pre-compute everything needed in the thread (no DB / ORM access inside)
     subject = f"[Placement Portal] New Opportunity at {job.companyName} — {job.role}"
     plain_body, html_body = _build_email_body(job)
     from_email = settings.DEFAULT_FROM_EMAIL
 
     def _send():
-        # Send one email, BCC all recipients — avoids exposing addresses to each other
         email = EmailMultiAlternatives(
             subject=subject,
             body=plain_body,
             from_email=from_email,
-            to=[from_email],          # "To" shows the placement cell address
-            bcc=recipient_emails,     # actual recipients hidden via BCC
+            to=[from_email],
+            bcc=recipient_emails,
         )
         email.attach_alternative(html_body, "text/html")
 

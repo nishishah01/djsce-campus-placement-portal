@@ -2,7 +2,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useApplications, useJobs, useStudents, useUpdateApplication } from "@/hooks/useApi";
 import { AlertCircle, Download, TrendingUp, Users } from "lucide-react";
@@ -182,7 +181,7 @@ export default function RecruiterPostings() {
                                         className="mt-2 px-2"
                                         onClick={() => window.open(app.customResume, '_blank')}
                                       >
-                                        Download Company Resume
+                                        Download Student Resume
                                       </Button>
                                     ) : student?.resumeUrl ? (
                                       <Button

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { Role, useCreateRecruiter, useCreateStudent, useRecruiters, useStudents } from "@/hooks/useApi";
-import { Briefcase, GraduationCap, Shield, LogIn } from "lucide-react";
+import { Briefcase, GraduationCap, LogIn, Shield } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -34,7 +34,7 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
-  
+
   const [regForm, setRegForm] = useState({
     name: "",
     email: "",
@@ -79,7 +79,7 @@ export default function LoginPage() {
       }
       const recruiter = recruiters.find((r: any) => r.email === identifier.trim());
       if (recruiter && recruiter.password === password) {
-        login("recruiter", recruiter.id);
+        login("recruiter", recruiter.id, recruiter.recruiterName);
         toast.success(`Logged in as Recruiter: ${recruiter.companyName}`);
         navigate("/recruiter");
       } else {
@@ -172,7 +172,7 @@ export default function LoginPage() {
       createRecruiter(newRecruiter, {
         onSuccess: () => {
           toast.success(`Recruiter account created successfully! Welcome to PlaceHub.`);
-          login("recruiter", newRecruiter.id);
+          login("recruiter", newRecruiter.id, newRecruiter.recruiterName);
           navigate("/recruiter");
         },
         onError: () => {
@@ -264,8 +264,8 @@ export default function LoginPage() {
                 style={{ background: "hsl(170,65%,40%)" }}
               >
                 {selectedRole === "student" ? <GraduationCap className="h-4 w-4" /> :
-                 selectedRole === "recruiter" ? <Briefcase className="h-4 w-4" /> :
-                 <Shield className="h-4 w-4" />}
+                  selectedRole === "recruiter" ? <Briefcase className="h-4 w-4" /> :
+                    <Shield className="h-4 w-4" />}
               </span>
               {isRegistering
                 ? `Create ${selectedRole === "student" ? "Student" : "Recruiter"} Account`
@@ -279,19 +279,19 @@ export default function LoginPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Full Name</Label>
-                    <Input value={regForm.name} onChange={(e) => setRegForm({...regForm, name: e.target.value})} placeholder="John Doe" />
+                    <Input value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} placeholder="Full Name" />
                   </div>
                   <div>
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Email</Label>
-                    <Input type="email" value={regForm.email} onChange={(e) => setRegForm({...regForm, email: e.target.value})} placeholder="john@uni.edu" />
+                    <Input type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} placeholder="example@gmail.com" />
                   </div>
                   <div>
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">CGPA</Label>
-                    <Input type="number" step="0.1" value={regForm.cgpa} onChange={(e) => setRegForm({...regForm, cgpa: e.target.value})} placeholder="8.5" />
+                    <Input type="number" step="0.1" value={regForm.cgpa} onChange={(e) => setRegForm({ ...regForm, cgpa: e.target.value })} placeholder="8.5" />
                   </div>
                   <div>
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Password</Label>
-                    <Input type="password" value={regForm.password} onChange={(e) => setRegForm({...regForm, password: e.target.value})} placeholder="Create a password" />
+                    <Input type="password" value={regForm.password} onChange={(e) => setRegForm({ ...regForm, password: e.target.value })} placeholder="Create a password" />
                   </div>
                   <div className="sm:col-span-2">
                     <p className="text-xs text-gray-400">You can add your SAP ID later from your profile after logging in.</p>
@@ -301,19 +301,19 @@ export default function LoginPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="sm:col-span-2">
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Company Name</Label>
-                    <Input value={regForm.companyName} onChange={(e) => setRegForm({...regForm, companyName: e.target.value})} placeholder="Tesla, Amazon, etc." />
+                    <Input value={regForm.companyName} onChange={(e) => setRegForm({ ...regForm, companyName: e.target.value })} placeholder="Company Name" />
                   </div>
                   <div>
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Recruiter Name</Label>
-                    <Input value={regForm.name} onChange={(e) => setRegForm({...regForm, name: e.target.value})} placeholder="Jane Smith" />
+                    <Input value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} placeholder="Recruiter Name" />
                   </div>
                   <div>
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Email</Label>
-                    <Input type="email" value={regForm.email} onChange={(e) => setRegForm({...regForm, email: e.target.value})} placeholder="jane@company.com" />
+                    <Input type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} placeholder="email@company.com" />
                   </div>
                   <div className="sm:col-span-2">
                     <Label className="text-xs font-semibold text-gray-600 mb-1 block">Password</Label>
-                    <Input type="password" value={regForm.password} onChange={(e) => setRegForm({...regForm, password: e.target.value})} placeholder="Enter Password" />
+                    <Input type="password" value={regForm.password} onChange={(e) => setRegForm({ ...regForm, password: e.target.value })} placeholder="Enter Password" />
                   </div>
                 </div>
               )}
@@ -365,7 +365,7 @@ export default function LoginPage() {
                     />
                   </div>
                 )}
-                
+
                 {(selectedRole === "student" || selectedRole === "recruiter") && (
                   <div className="text-center pt-1">
                     <span className="text-xs text-gray-400">Don't have an account? </span>

@@ -62,7 +62,7 @@ BASIC_WORDS = set([
 
 def get_extension(filename: str) -> str:
     return "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else "" #extracts pdfs or docs
-
+#in case of my.resume.pdf, it will return .pdf (last part after last dot)
 def save_upload_file(upload_file: UploadFile) -> str:
     filename = os.path.basename(getattr(upload_file, "filename", "file"))
     safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", filename) #sanitizes filename to prevent directory traversal and unsafe characters
@@ -210,16 +210,14 @@ def compute_score(resume_text: str, job_description: str):
         "cv_file_url": None
     }
 
-# -----------------------
-# Routes
-# -----------------------
 @app.post("/api/rank")
 async def rank_applicants(
+    #async will help handle multiple req
     job_description_file: UploadFile = File(...),
     applicants: str = Form(...) # JSON string: [{"id": "...", "name": "...", "resumeUrl": "..."}]
 ):
     try:
-        # Extract text from the uploaded JD file
+        # Extract text from the uploaded JD file,pdfminer
         jd_text, _ = extract_text_from_upload(job_description_file)
         if not jd_text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from the Job Description file.")

@@ -14,6 +14,7 @@ export interface Student {
   cgpa: number;
   resumeUrl: string;
   avatar?: string;
+  password?: string;
 }
 
 export interface Job {

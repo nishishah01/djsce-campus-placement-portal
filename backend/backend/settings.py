@@ -135,8 +135,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Cloudinary settings
+# pyrefly: ignore [missing-import]
 import cloudinary
+# pyrefly: ignore [missing-import]
 import cloudinary.uploader
+# pyrefly: ignore [missing-import]
 import cloudinary.api
 from decouple import config
 

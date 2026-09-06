@@ -154,12 +154,20 @@ export default function StudentJobs() {
                   className="mt-1 w-full rounded-lg py-2.5 text-sm font-semibold transition-all"
                   style={applied
                     ? { background: "#f3f4f6", color: "#9ca3af", cursor: "not-allowed" }
+                    : isDeadlinePassed(job.deadline)
+                    ? { background: "#f3f4f6", color: "#9ca3af", cursor: "not-allowed" }
                     : { background: "#2cb5a0", color: "#fff" }
                   }
                   disabled={applied}
-                  onClick={() => setApplyJobId(job.id)}
+                  onClick={() => {
+                    if (isDeadlinePassed(job.deadline)) {
+                      toast.error("This application is no longer accepting requests....");
+                      return;
+                    }
+                    setApplyJobId(job.id);
+                  }}
                 >
-                  {applied ? "Already Applied" : "Apply Now"}
+                  {applied ? "Already Applied" : isDeadlinePassed(job.deadline) ? "Deadline Passed" : "Apply Now"}
                 </button>
               </div>
             );

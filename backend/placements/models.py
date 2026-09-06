@@ -1,4 +1,5 @@
 from django.db import models
+# pyrefly: ignore [missing-import]
 from cloudinary.models import CloudinaryField
 
 class Recruiter(models.Model):
